@@ -1,0 +1,37 @@
+name: whisper
+
+services:
+  speaches-cpu:
+    profiles: [cpu]
+    # 0.8.3 trae Gradio 5.36.2: la UI falla con idioma del navegador en español (pantalla negra).
+    image: ghcr.io/speaches-ai/speaches:0.9.0-rc.3-cpu
+    container_name: speaches
+    restart: unless-stopped
+    ports:
+      # Solo localhost: el micrófono del navegador requiere localhost o HTTPS
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - hf-hub-cache:/home/ubuntu/.cache/huggingface/hub
+
+  speaches-gpu:
+    profiles: [gpu]
+    # Requiere driver NVIDIA reciente (>= 570 recomendado).
+    # Con drivers más viejos usar: 0.9.0-rc.3-cuda-12.6.3 o 0.9.0-rc.3-cuda-12.4.1
+    image: ghcr.io/speaches-ai/speaches:0.9.0-rc.3-cuda
+    container_name: speaches
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - hf-hub-cache:/home/ubuntu/.cache/huggingface/hub
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  # Caché de modelos descargados (persiste entre reinicios)
+  hf-hub-cache:
